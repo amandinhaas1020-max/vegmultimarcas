@@ -16,6 +16,13 @@ app.get("/", (req, res) => {
   res.send("Backend Mercado Pago + Melhor Envio V&G funcionando!");
 });
 
+app.get("/teste-frete", (req, res) => {
+  res.json({
+    backend: "online",
+    tokenMelhorEnvio: process.env.ME_ACCESS_TOKEN ? "existe" : "nao existe"
+  });
+});
+
 app.post("/criar-pagamento", async (req, res) => {
   try {
     const { titulo, preco, quantidade } = req.body;
@@ -44,7 +51,6 @@ app.post("/criar-pagamento", async (req, res) => {
 
   } catch (error) {
     console.error("Erro Mercado Pago:", error.response?.data || error.message);
-
     res.status(500).json({
       erro: "Erro ao criar pagamento",
       detalhe: error.response?.data || error.message
