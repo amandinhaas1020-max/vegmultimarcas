@@ -1,10 +1,9 @@
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 const { MercadoPagoConfig, Preference } = require("mercadopago");
 
 const app = express();
-
-const axios = require("axios");
 
 app.use(cors());
 app.use(express.json());
@@ -41,14 +40,17 @@ app.post("/criar-pagamento", async (req, res) => {
       }
     });
 
-    res.json({ init_point: result.init_point });
+    res.json({
+      init_point: result.init_point
+    });
+
   } catch (error) {
     console.error("Erro Mercado Pago:", error);
-    res.status(500).json({ error: "Erro ao criar pagamento" });
+    res.status(500).json({
+      error: "Erro ao criar pagamento"
+    });
   }
 });
-
-const PORT = process.env.PORT || 3000;
 
 app.post("/calcular-frete", async (req, res) => {
   try {
@@ -89,12 +91,15 @@ app.post("/calcular-frete", async (req, res) => {
       }
     );
 
-    const fretes = resposta.data.filter(f =>
-      f.name?.includes("PAC") || f.name?.includes("SEDEX")
+    const fretes = resposta.data.filter(
+      f => f.name?.includes("PAC") || f.name?.includes("SEDEX")
     );
 
     res.json(fretes);
+
   } catch (erro) {
+    console.error("Erro frete:", erro.response?.data || erro.message);
+
     res.status(500).json({
       erro: "Erro ao calcular frete",
       detalhe: erro.response?.data || erro.message
@@ -102,8 +107,8 @@ app.post("/calcular-frete", async (req, res) => {
   }
 });
 
+const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
   console.log(`Backend rodando na porta ${PORT}`);
-});
-  console.log("Servidor rodando na porta " + PORT);
 });
