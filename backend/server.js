@@ -4,7 +4,7 @@ const axios = require("axios");
 const { MercadoPagoConfig, Preference } = require("mercadopago");
 
 const app = express();
-
+console.log("VERSAO NOVA TESTE 123");
 app.use(cors());
 app.use(express.json());
 
