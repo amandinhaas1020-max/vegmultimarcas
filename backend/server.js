@@ -13,7 +13,7 @@ const client = new MercadoPagoConfig({
 });
 
 app.get("/", (req, res) => {
-  res.send("Backend Mercado Pago V&G funcionando!");
+  res.send("Backend Mercado Pago + Melhor Envio V&G funcionando!");
 });
 
 app.post("/criar-pagamento", async (req, res) => {
@@ -28,7 +28,7 @@ app.post("/criar-pagamento", async (req, res) => {
           {
             title: titulo || "Produto V&G Multimarcas",
             quantity: Number(quantidade) || 1,
-            unit_price: Number(preco)
+            unit_price: Number(preco) || 1
           }
         ],
         back_urls: {
@@ -40,21 +40,33 @@ app.post("/criar-pagamento", async (req, res) => {
       }
     });
 
-    res.json({
-      init_point: result.init_point
-    });
+    res.json({ init_point: result.init_point });
 
   } catch (error) {
-    console.error("Erro Mercado Pago:", error);
+    console.error("Erro Mercado Pago:", error.response?.data || error.message);
+
     res.status(500).json({
-      error: "Erro ao criar pagamento"
+      erro: "Erro ao criar pagamento",
+      detalhe: error.response?.data || error.message
     });
   }
 });
 
 app.post("/calcular-frete", async (req, res) => {
   try {
-    const { cep } = req.body;
+    const cep = String(req.body.cep || req.body.cepDestino || "").replace(/\D/g, "");
+
+    if (!cep || cep.length !== 8) {
+      return res.status(400).json({
+        erro: "CEP inválido"
+      });
+    }
+
+    if (!process.env.ME_ACCESS_TOKEN) {
+      return res.status(500).json({
+        erro: "ME_ACCESS_TOKEN não encontrado no Render"
+      });
+    }
 
     const resposta = await axios.post(
       "https://www.melhorenvio.com.br/api/v2/me/shipment/calculate",
@@ -91,14 +103,15 @@ app.post("/calcular-frete", async (req, res) => {
       }
     );
 
-    const fretes = resposta.data.filter(
-      f => f.name?.includes("PAC") || f.name?.includes("SEDEX")
-    );
+    const fretes = resposta.data.filter((f) => {
+      const nome = String(f.name || "").toUpperCase();
+      return nome.includes("PAC") || nome.includes("SEDEX");
+    });
 
     res.json(fretes);
 
   } catch (erro) {
-    console.error("Erro frete:", erro.response?.data || erro.message);
+    console.error("ERRO MELHOR ENVIO:", erro.response?.data || erro.message);
 
     res.status(500).json({
       erro: "Erro ao calcular frete",
