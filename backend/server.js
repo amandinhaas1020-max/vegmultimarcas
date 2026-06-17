@@ -103,5 +103,7 @@ app.post("/calcular-frete", async (req, res) => {
 });
 
 app.listen(PORT, () => {
+  console.log(`Backend rodando na porta ${PORT}`);
+});
   console.log("Servidor rodando na porta " + PORT);
 });
