@@ -50,7 +50,6 @@ app.post("/criar-pagamento", async (req, res) => {
     res.json({ init_point: result.init_point });
 
   } catch (error) {
-    console.error("Erro Mercado Pago:", error.response?.data || error.message);
     res.status(500).json({
       erro: "Erro ao criar pagamento",
       detalhe: error.response?.data || error.message
@@ -62,27 +61,19 @@ app.post("/calcular-frete", async (req, res) => {
   try {
     const cep = String(req.body.cep || req.body.cepDestino || "").replace(/\D/g, "");
 
-    if (!cep || cep.length !== 8) {
-      return res.status(400).json({
-        erro: "CEP inválido"
-      });
+    if (cep.length !== 8) {
+      return res.status(400).json({ erro: "CEP inválido" });
     }
 
     if (!process.env.ME_ACCESS_TOKEN) {
-      return res.status(500).json({
-        erro: "ME_ACCESS_TOKEN não encontrado no Render"
-      });
+      return res.status(500).json({ erro: "ME_ACCESS_TOKEN não encontrado no Render" });
     }
 
     const resposta = await axios.post(
       "https://www.melhorenvio.com.br/api/v2/me/shipment/calculate",
       {
-        from: {
-          postal_code: "86000000"
-        },
-        to: {
-          postal_code: cep
-        },
+        from: { postal_code: "86000000" },
+        to: { postal_code: cep },
         products: [
           {
             id: "1",
@@ -104,21 +95,14 @@ app.post("/calcular-frete", async (req, res) => {
           Authorization: `Bearer ${process.env.ME_ACCESS_TOKEN}`,
           Accept: "application/json",
           "Content-Type": "application/json",
-          "User-Agent": "V&G Multimarcas"
+          "User-Agent": "VG Multimarcas"
         }
       }
     );
 
-    const fretes = resposta.data.filter((f) => {
-      const nome = String(f.name || "").toUpperCase();
-      return nome.includes("PAC") || nome.includes("SEDEX");
-    });
-
-    res.json(fretes);
+    res.json(resposta.data);
 
   } catch (erro) {
-    console.error("ERRO MELHOR ENVIO:", erro.response?.data || erro.message);
-
     res.status(500).json({
       erro: "Erro ao calcular frete",
       detalhe: erro.response?.data || erro.message
