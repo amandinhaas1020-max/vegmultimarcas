@@ -10,6 +10,8 @@ app.use(express.json({ limit: "10mb" }));
 
 let products = [];
 
+const CEP_ORIGEM = "02373060";
+
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
@@ -22,24 +24,9 @@ app.get("/teste-frete", (req, res) => {
   res.json({
     status: "ok",
     tokenMercadoPago: process.env.MP_ACCESS_TOKEN ? "existe" : "nao existe",
-    tokenMelhorEnvio: process.env.ME_ACCESS_TOKEN ? "existe" : "nao existe"
+    tokenMelhorEnvio: process.env.ME_ACCESS_TOKEN ? "existe" : "nao existe",
+    cepOrigem: CEP_ORIGEM
   });
-});
-
-app.get("/teste-calcular-frete", async (req, res) => {
-  try {
-    const resposta = await calcularFreteMelhorEnvio("11680000");
-
-    res.json({
-      status: "ok",
-      resultado: resposta
-    });
-  } catch (erro) {
-    res.status(500).json({
-      erro: "Erro Melhor Envio",
-      detalhe: erro.response?.data || erro.message
-    });
-  }
 });
 
 async function calcularFreteMelhorEnvio(cepDestino) {
@@ -47,7 +34,7 @@ async function calcularFreteMelhorEnvio(cepDestino) {
     "https://www.melhorenvio.com.br/api/v2/me/shipment/calculate",
     {
       from: {
-        postal_code: "86000000"
+        postal_code: CEP_ORIGEM
       },
       to: {
         postal_code: cepDestino
@@ -79,6 +66,23 @@ async function calcularFreteMelhorEnvio(cepDestino) {
     }
   ).then(r => r.data);
 }
+
+app.get("/teste-calcular-frete", async (req, res) => {
+  try {
+    const resposta = await calcularFreteMelhorEnvio("11680000");
+
+    res.json({
+      status: "ok",
+      cepOrigem: CEP_ORIGEM,
+      resultado: resposta
+    });
+  } catch (erro) {
+    res.status(500).json({
+      erro: "Erro Melhor Envio",
+      detalhe: erro.response?.data || erro.message
+    });
+  }
+});
 
 app.post("/calcular-frete", async (req, res) => {
   try {
